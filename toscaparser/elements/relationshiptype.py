@@ -41,6 +41,10 @@ class RelationshipType(StatefulEntityType):
     def valid_target_types(self):
         return self.entity_value(self.defs, 'valid_target_types')
 
+    @property
+    def interfaces(self):
+        return self.get_value(self.INTERFACES)
+
     def _validate_keys(self):
         for key in self.defs.keys():
             if key not in self.SECTIONS:
