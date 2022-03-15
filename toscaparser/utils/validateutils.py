@@ -10,12 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import collections
+import collections.abc
 import dateutil.parser
 import logging
 import numbers
 import re
-import six
 
 # from toscaparser.elements import constraints
 from toscaparser.common.exception import ExceptionCollector
@@ -64,7 +63,7 @@ def validate_float(value):
 
 
 def validate_string(value):
-    if not isinstance(value, six.string_types):
+    if not isinstance(value, str):
         ExceptionCollector.appendException(
             ValueError(_('"%s" is not a string.') % value))
     return value
@@ -128,7 +127,7 @@ def validate_value_in_range(value, range, prop_name):
 
 
 def validate_map(value):
-    if not isinstance(value, collections.Mapping):
+    if not isinstance(value, collections.abc.Mapping):
         ExceptionCollector.appendException(
             ValueError(_('"%s" is not a map.') % value))
     return value
@@ -180,7 +179,7 @@ class TOSCAVersionProperty(object):
             return
         ver = match.groupdict()
         if self.version in ['0', '0.0', '0.0.0']:
-            log.warning(_('Version assumed as not provided'))
+            log.warning('Version assumed as not provided')
             self.version = None
         self.minor_version = ver['minor_version']
         self.major_version = ver['major_version']
@@ -199,7 +198,7 @@ class TOSCAVersionProperty(object):
 
         if self.minor_version is None and self.build_version is None and \
                 value != '0':
-            log.warning(_('Minor version assumed "0".'))
+            log.warning('Minor version assumed "0".')
             self.version = '.'.join([value, '0'])
         return value
 

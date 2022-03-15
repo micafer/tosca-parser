@@ -76,8 +76,8 @@ class TopologyTemplate(object):
             if (self.parsed_params and input.name not in self.parsed_params
                 or self.parsed_params is None) and input.required \
                     and input.default is None:
-                log.warning(_('The required parameter %s '
-                              'is not provided') % input.name)
+                log.warning('The required parameter %s '
+                            'is not provided' % input.name)
 
             inputs.append(input)
         return inputs
@@ -140,7 +140,15 @@ class TopologyTemplate(object):
                 policyObj = Policy(policy_name, policy_tpl,
                                    target_objects, targets_type,
                                    self.custom_defs)
-                policies.append(policyObj)
+                # If the policyObj.type is defined in TOSCA_definition_1_0.yaml
+                # or is defined as a custom definition, validate the properties
+                # before adding it to the policies list.
+                if (policyObj.type_definition and
+                    (policyObj.type in policyObj.type_definition.TOSCA_DEF or
+                     (policyObj.type not in policyObj.type_definition.TOSCA_DEF
+                      and bool(policyObj.custom_def)))):
+                    policyObj.validate()
+                    policies.append(policyObj)
         return policies
 
     def _groups(self):

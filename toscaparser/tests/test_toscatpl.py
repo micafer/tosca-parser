@@ -11,7 +11,7 @@
 #    under the License.
 
 import os
-import six
+
 from toscaparser.common import exception
 import toscaparser.elements.interfaces as ifaces
 from toscaparser.elements.nodetype import NodeType
@@ -203,7 +203,7 @@ class ToscaTemplateTest(TestCase):
                 self.assertEqual('wordpress/wordpress_configure.sh',
                                  interface.implementation)
                 self.assertEqual(3, len(interface.inputs))
-                TestCase.skip(self, 'bug #1440247')
+                self.skipTest('bug #1440247')
                 wp_db_port = interface.inputs['wp_db_port']
                 self.assertIsInstance(wp_db_port, GetProperty)
                 self.assertEqual('get_property', wp_db_port.name)
@@ -468,7 +468,7 @@ class ToscaTemplateTest(TestCase):
             lambda: NodeTemplate(name, nodetemplates,
                                  custom_def).get_capabilities_objects())
         self.assertEqual('Type "tosca.capabilities.TestCapability" is not '
-                         'a valid type.', six.text_type(err))
+                         'a valid type.', str(err))
 
     def test_capability_without_properties(self):
         expected_version = "tosca_simple_yaml_1_0"
@@ -587,7 +587,7 @@ class ToscaTemplateTest(TestCase):
                                  'tosca.nodes.SoftwareComponent.Logstash',
                                  'tosca.nodes.SoftwareComponent.Rsyslog.'
                                  'TestRsyslogType']
-        self.assertItemsEqual(tosca.topology_template.custom_defs.keys(),
+        self.assertCountEqual(tosca.topology_template.custom_defs.keys(),
                               expected_custom_types)
 
     def test_invalid_template_file(self):
@@ -1006,3 +1006,11 @@ class ToscaTemplateTest(TestCase):
                 rel_tpls = trgt.get_relationship_template()
 
         self.assertEqual(rel_tpls[0].type, "MyAttachesTo")
+
+    def test_policies_without_required_property(self):
+        tosca_tpl = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "data/policies/test_policies_without_required_property.yaml")
+        self.assertRaises(exception.ValidationError, ToscaTemplate,
+                          tosca_tpl, None)
+
