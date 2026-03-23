@@ -1,0 +1,41 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+description: Template validating get_property with nested function arguments.
+
+imports:
+  - ../custom_types/wordpress.yaml
+  - ../custom_types/db_with_list_param.yaml
+
+topology_template:
+  inputs:
+    prop_index:
+      type: integer
+      default: 2
+
+  node_templates:
+    wordpress:
+      type: tosca.nodes.WebApplication.WordPress
+      requirements:
+        - host: server
+        - database_endpoint: mysql_database
+      interfaces:
+        Standard:
+          configure:
+            implementation: wordpress/wordpress_configure.sh
+            inputs:
+              wp_list_prop: { get_property: [ mysql_database, list_prop, { get_input: prop_index } ] }
+
+    mysql_database:
+      type: tosca.nodes.DatabaseWithListParam
+      properties:
+        list_prop: [ 1, 2, 3 ]
+      requirements:
+        - host: mysql_dbms
+
+    mysql_dbms:
+      type: tosca.nodes.DBMS
+      requirements:
+        - host: server
+
+    server:
+      type: tosca.nodes.Compute

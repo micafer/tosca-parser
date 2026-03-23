@@ -152,6 +152,15 @@ class IntrinsicFunctionsTest(TestCase):
         self.assertIsInstance(wp_list_prop, functions.GetProperty)
         self.assertEqual(3, wp_list_prop.result())
 
+    def test_get_property_with_nested_function_args(self):
+        tosca_tpl = utils.get_sample_test_path(
+            'data/functions/test_get_property_with_nested_function_args.yaml')
+        wordpress = self._get_node('wordpress', ToscaTemplate(tosca_tpl))
+        operation = self._get_operation(wordpress.interfaces, 'configure')
+        wp_list_prop = operation.inputs['wp_list_prop']
+        self.assertIsInstance(wp_list_prop, functions.GetProperty)
+        self.assertEqual(3, wp_list_prop.result())
+
     def test_get_property_with_capabilties_inheritance(self):
         tosca_tpl = utils.get_sample_test_path(
             "data/functions/test_capabilties_inheritance.yaml")
@@ -398,3 +407,12 @@ class TokenTest(TestCase):
             ValueError,
             _('Invalid arguments for function "token". Expected '
               'single char value as second argument.'))
+
+    def test_validate_token_with_nested_function_args(self):
+        tosca = self._load_template(
+            'data/functions/test_token_with_nested_function_args.yaml')
+        server_url_output = [
+            output for output in tosca.outputs if output.name == 'url_part'][0]
+        func = functions.get_function(tosca, tosca.outputs,
+                                      server_url_output.value)
+        self.assertIsInstance(func, functions.Token)

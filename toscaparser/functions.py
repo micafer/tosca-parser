@@ -67,6 +67,21 @@ class Function(object, metaclass=abc.ABCMeta):
         """Validates function arguments."""
         pass
 
+    def _resolve_nested_function(self, arg):
+        """Resolve nested function arguments when possible.
+
+        If a nested function cannot be fully evaluated at parse-time (for
+        example get_attribute), return the Function instance so validators can
+        defer strict type checks to runtime.
+        """
+        nested = get_function(self.tosca_tpl, self.context, arg)
+        if isinstance(nested, Function):
+            result = nested.result()
+            if isinstance(result, Function):
+                return nested
+            return result
+        return nested
+
 
 class GetInput(Function):
     """Get a property value declared within the input of the service template.
@@ -164,15 +179,21 @@ class GetAttribute(Function):
             value_schema = attr.schema
             if len(self.args) > index:
                 for elem in self.args[index:]:
+                    elem = self._resolve_nested_function(elem)
                     if value_type == "list":
                         if not isinstance(elem, int):
+                            if isinstance(elem, Function):
+                                return
                             ExceptionCollector.appendException(
                                 ValueError(_('Illegal arguments for function'
                                              ' "{0}". "{1}" Expected positive'
                                              ' integer argument'
                                              ).format(GET_ATTRIBUTE, elem)))
+                            return
                         value_type = value_schema['entry_schema']['type']
                     elif value_type == "map":
+                        if isinstance(elem, Function):
+                            return
                         value_type = value_schema['entry_schema']['type']
                     elif value_type in Schema.PROPERTY_TYPES:
                         ExceptionCollector.appendException(
@@ -414,8 +435,19 @@ class GetProperty(Function):
                                                                 self.args[2])
             if len(self.args) > index:
                 for elem in self.args[index:]:
+                    elem = self._resolve_nested_function(elem)
                     if isinstance(property_value, list):
-                        int_elem = int(elem)
+                        if isinstance(elem, Function):
+                            return
+                        try:
+                            int_elem = int(elem)
+                        except (TypeError, ValueError):
+                            ExceptionCollector.appendException(
+                                ValueError(_(
+                                    'Illegal arguments for function "{0}". '
+                                    '"{1}" Expected positive integer '
+                                    'argument').format(GET_PROPERTY, elem)))
+                            return
                         property_value = self._get_index_value(property_value,
                                                                int_elem)
                     else:
@@ -635,7 +667,10 @@ class GetProperty(Function):
                                                                 self.args[2])
             if len(self.args) > index:
                 for elem in self.args[index:]:
+                    elem = self._resolve_nested_function(elem)
                     if isinstance(property_value, list):
+                        if isinstance(elem, Function):
+                            return property_value
                         int_elem = int(elem)
                         property_value = self._get_index_value(property_value,
                                                                int_elem)
@@ -834,13 +869,20 @@ class Token(Function):
                 ValueError(_('Invalid arguments for function "{0}". Expected '
                              'at least three arguments.').format(TOKEN)))
         else:
-            if not isinstance(self.args[1], str) or len(self.args[1]) != 1:
+            delimiter = self._resolve_nested_function(self.args[1])
+            index = self._resolve_nested_function(self.args[2])
+
+            if not isinstance(delimiter, str) or len(delimiter) != 1:
+                if isinstance(delimiter, Function):
+                    return
                 ExceptionCollector.appendException(
                     ValueError(_('Invalid arguments for function "{0}". '
                                  'Expected single char value as second '
                                  'argument.').format(TOKEN)))
 
-            if not isinstance(self.args[2], int):
+            if not isinstance(index, int):
+                if isinstance(index, Function):
+                    return
                 ExceptionCollector.appendException(
                     ValueError(_('Invalid arguments for function "{0}". '
                                  'Expected integer value as third '

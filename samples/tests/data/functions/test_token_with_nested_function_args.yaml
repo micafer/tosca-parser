@@ -1,0 +1,17 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+description: Template validating token with nested function arguments.
+
+topology_template:
+  inputs:
+    split_char:
+      type: string
+      default: ":"
+    split_index:
+      type: integer
+      default: 1
+
+  outputs:
+    url_part:
+      description: extract token using nested get_input arguments
+      value: { token: [ "10.20:5000", { get_input: split_char }, { get_input: split_index } ] }
