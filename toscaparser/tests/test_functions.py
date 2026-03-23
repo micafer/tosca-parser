@@ -161,6 +161,18 @@ class IntrinsicFunctionsTest(TestCase):
         self.assertIsInstance(wp_list_prop, functions.GetProperty)
         self.assertEqual(3, wp_list_prop.result())
 
+    def test_get_property_with_function_value_and_index(self):
+        """get_property where the property value is itself a function (get_input)
+        and the property is accessed with an integer index."""
+        tosca_tpl = utils.get_sample_test_path(
+            'data/functions/test_get_property_nested_function_value.yaml')
+        some_node = self._get_node('some_node', ToscaTemplate(tosca_tpl))
+        operation = self._get_operation(some_node.interfaces, 'configure')
+        enes_dns_name = operation.inputs['enes_dns_name']
+        self.assertIsInstance(enes_dns_name, functions.GetProperty)
+        result = enes_dns_name.result()
+        self.assertEqual('name1.example.com', result)
+
     def test_get_property_with_capabilties_inheritance(self):
         tosca_tpl = utils.get_sample_test_path(
             "data/functions/test_capabilties_inheritance.yaml")

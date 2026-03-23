@@ -434,6 +434,9 @@ class GetProperty(Function):
                 property_value = self._find_req_or_cap_property(self.args[1],
                                                                 self.args[2])
             if len(self.args) > index:
+                property_value = self._resolve_nested_function(property_value)
+                if isinstance(property_value, Function) or property_value is None:
+                    return
                 for elem in self.args[index:]:
                     elem = self._resolve_nested_function(elem)
                     if isinstance(property_value, list):
@@ -666,6 +669,11 @@ class GetProperty(Function):
                 property_value = self._find_req_or_cap_property(self.args[1],
                                                                 self.args[2])
             if len(self.args) > index:
+                property_value = self._resolve_nested_function(property_value)
+                if isinstance(property_value, Function):
+                    return property_value
+                if property_value is None:
+                    return None
                 for elem in self.args[index:]:
                     elem = self._resolve_nested_function(elem)
                     if isinstance(property_value, list):

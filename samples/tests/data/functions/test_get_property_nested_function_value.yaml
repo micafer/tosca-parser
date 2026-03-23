@@ -1,0 +1,37 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+description: >
+  Template validating get_property when the property value is itself a
+  function (get_input) and the property is accessed with an integer index.
+  This covers the case: { get_property: [ node, list_prop, 0 ] }
+  where list_prop's value is { get_input: some_input }.
+
+imports:
+  - ../custom_types/node_with_dns_names.yaml
+
+topology_template:
+  inputs:
+    additional_dns_names:
+      type: list
+      entry_schema:
+        type: string
+      default:
+        - name1.example.com
+        - name2.example.com
+
+  node_templates:
+    lrms_front_end:
+      type: my.nodes.FrontEnd
+      properties:
+        public_additional_dns_names: { get_input: additional_dns_names }
+
+    some_node:
+      type: tosca.nodes.SoftwareComponent
+      requirements:
+        - host: lrms_front_end
+      interfaces:
+        Standard:
+          configure:
+            implementation: configure.sh
+            inputs:
+              enes_dns_name: { get_property: [ lrms_front_end, public_additional_dns_names, 0 ] }
