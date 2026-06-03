@@ -233,11 +233,8 @@ class EntityTemplate(object):
         # validate all required properties have values
         if properties:
             req_props_no_value_or_default = []
-            # Only check if there are allowed properties, if empty asume any
-            # property is allowed
-            if allowed_props:
-                self._common_validate_field(properties, allowed_props,
-                                            'properties')
+            self._common_validate_field(properties, allowed_props,
+                                        'properties')
             # make sure it's not missing any property required by a tosca type
             for r in required_props:
                 if r not in properties.keys():

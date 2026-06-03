@@ -370,6 +370,18 @@ class GetAttributeTest(TestCase):
         self.assertIsNotNone(self._load_template(
             'functions/test_get_attribute_nested_data_types.yaml'))
 
+    def test_get_attribute_host_keyword_with_capability_attribute(self):
+        tpl = self._load_template(
+            'functions/test_get_attribute_host_keyword_with_capability_attribute.yaml')
+
+        app_node = [x for x in tpl.nodetemplates if x.name == 'application'][0]
+        configure_op = [x for x in app_node.interfaces
+                        if x.name == 'configure'][0]
+        tls_input = configure_op.inputs['tls_certs']
+
+        self.assertIsInstance(tls_input, functions.GetAttribute)
+        self.assertEqual('server', tls_input._find_node_template('HOST').name)
+
 
 class ConcatTest(TestCase):
 

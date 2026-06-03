@@ -252,6 +252,30 @@ class GetAttribute(Function):
             if self.attribute_name in attrs_def else []
         return len(found) == 1
 
+    def _has_capability_attribute(self, node_template, capability_name,
+                                  attr_name):
+        """Check capability attribute existence without raising exceptions."""
+        caps = node_template.get_capabilities()
+        if not caps or capability_name not in caps.keys():
+            return False
+        cap = caps[capability_name]
+        attrs = cap.definition.get_attributes_def()
+        return bool(attrs and attr_name in attrs.keys())
+
+    def _has_req_or_cap_attribute(self, node_template, req_or_cap_name,
+                                  attr_name):
+        """Check req/cap attribute existence on a node template."""
+        for r in node_template.requirements:
+            for req, target_name in r.items():
+                if req == req_or_cap_name:
+                    req_target = self._find_node_template(target_name)
+                    if req_target and self._has_capability_attribute(
+                            req_target, req, attr_name):
+                        return True
+        return self._has_capability_attribute(node_template,
+                                              req_or_cap_name,
+                                              attr_name)
+
     def _find_host_containing_attribute(self, node_template_name=SELF):
         node_template = self._find_node_template(node_template_name)
         if node_template:
@@ -263,7 +287,14 @@ class GetAttribute(Function):
                     for capability in target_type.get_capabilities_objects():
                         if capability.inherits_from(
                                 hosted_on_rel['valid_target_types']):
-                            if self._attribute_exists_in_type(target_type):
+                            if len(self.args) == 2 and \
+                                    self._attribute_exists_in_type(target_type):
+                                return target_node
+                            if len(self.args) >= 3 and \
+                                    self._has_req_or_cap_attribute(
+                                        target_node,
+                                        self.args[1],
+                                        self.args[2]):
                                 return target_node
                             return self._find_host_containing_attribute(
                                 target_name)
