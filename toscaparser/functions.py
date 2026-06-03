@@ -290,6 +290,13 @@ class GetAttribute(Function):
                             if len(self.args) == 2 and \
                                     self._attribute_exists_in_type(target_type):
                                 return target_node
+                            # Support HOST attribute lookups with extra path
+                            # elements (for example: [HOST, private_address, 0]).
+                            # In this case args[1] is still the attribute name;
+                            # args[2:] are list/map indexes or nested keys.
+                            if len(self.args) >= 3 and \
+                                    self._attribute_exists_in_type(target_type):
+                                return target_node
                             if len(self.args) >= 3 and \
                                     self._has_req_or_cap_attribute(
                                         target_node,
